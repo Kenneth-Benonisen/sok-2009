@@ -2,6 +2,8 @@
 
 # Koden tilhører kandidatnummer: 13, 73, 31, 4, 58
 
+# Det kan oppstå bug med øæå, det ligger kommentarer på punktene hvor det kan oppstå. 
+
 # Pakker.
 library(tidyverse)
 library(janitor)
@@ -97,9 +99,9 @@ tibble(bukta_produkt_dag) # viser datasettet
 
 # Plotter graf av inntektene til produktene fordelt på år. 
 bukta_produkt_dag %>%
-  rename(Produkt = produkt,
-         År = ar) %>% 
-  ggplot(aes(y = inntekt_produkt, x = Produkt,  fill = År)) +
+  rename(Produkt = produkt, 
+         År = ar) %>% # det skal stå År hvis det står noe annet hær. 
+  ggplot(aes(y = inntekt_produkt, x = Produkt,  fill = År)) + # det skal stå År hvis det står noe annet hær.
   geom_col(position = "dodge") +
   theme_minimal() +
   theme(legend.position = "bottom") +
@@ -128,8 +130,8 @@ pairwise.t.test(bukta_salg_pr_time$inntekt,
 Bukta_data %>%
   group_by(per15min, ar, dag)%>% 
   summarize(inntekt = sum(antall * pris)) %>%
-  rename(År = ar) %>% 
-  ggplot(aes(per15min, inntekt, col = År)) +
+  rename(År = ar) %>% # det skal stå År hvis det står noe annet hær. 
+  ggplot(aes(per15min, inntekt, col = År)) + # det skal stå År hvis det står noe annet hær. 
   geom_line(size = 1) +
   geom_point(size = 2) +
   theme_bw() +
