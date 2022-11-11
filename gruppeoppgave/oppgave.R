@@ -1,15 +1,17 @@
 
-# Pakker
+
+# Koden tilhører kandidatnummer: 13, 73, 31, 4, 58
+
+# Pakker.
 library(tidyverse)
 library(janitor)
 library(car)
-
 
 # Henter ned datasettet fra kilden.
 githubURL <- "https://github.com/uit-sok-2009-h22/uit-sok-2009-h22.github.io/blob/main/filer/Bukta_data_v2.Rdata?raw=true"
 load(url(githubURL))
 
-# Kode for a kunne bruke norske bokstaver
+# Kode for a kunne bruke norske bokstaver.
 Sys.setlocale(locale="no_NO")
 
 # cleaning names with janitor. 
@@ -17,12 +19,8 @@ Bukta_data <- Bukta_data %>%
   clean_names()
 
 #opg 1  ------------------------------------------------------------------------
-# Lag en tabell over total inntekt per år, deltakere per år og inntekt per deltaker. 
-# Lag en tilsvarende tabell, men nå bryt samme data opp i år og dager. 
-# Lag grafer av disse tabellene (stolpediagram), hvor du viser inntekt per år og inntekt per år og dag
-# Fra disse to tabellene, ser det ut til å være noe forskjeller mellom årene og/eller dagene for hvert år?
-# Vi kan ennå ikke si noe om det er statistisk signifikant, men ser du noen trender i dataene? 
 
+# Opprettet tabell for dag.
 bukta_dag <- Bukta_data %>% 
   group_by(ar, dag) %>% 
   summarize(
@@ -31,6 +29,9 @@ bukta_dag <- Bukta_data %>%
     inntekt_per_gjest = inntekt / gjester
   )
 
+tibble(bukta_dag) # viser datasettet.
+
+# Opprettet tabell for år.
 bukta_ar <- bukta_dag %>% 
   group_by(ar) %>% 
   summarise(
@@ -39,32 +40,30 @@ bukta_ar <- bukta_dag %>%
     inntekt_per_gjest = inntekt / gjester
   )
 
+tibble(bukta_ar) # viser datasettet.
 
-# kommenter funnene
-
+# Plotter graf, fordelt inntekt på dag og år.
 bukta_dag %>%
-  ggplot(aes(ar, inntekt, fill = dag)) +
+  rename(Dag = dag) %>% 
+  ggplot(aes(ar, inntekt, fill = Dag)) +
   geom_col(position = "dodge", ) +
   labs(x = "", y = "Inntekt") +
-  theme_classic() +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
   scale_y_continuous(labels = scales::comma)
 
+# Plotter graf, samlet inntekt hver dag og fordelt på år.
 bukta_ar %>%
   ggplot(aes(ar, inntekt, fill = ar)) +
   geom_col(position = "dodge", ) +
-  labs(x = "", y = "Inntekt") +
-  theme_classic() +
+  labs(x = "", y = "Samlet inntekt") +
+  theme_minimal() +
   theme(legend.position = "none") +
   scale_y_continuous(labels = scales::comma) #breaks = seq(0,300000, 20000))
 
 
 
 #opg 2.1  ----------------------------------------------------------------------
-#  Lag en tabell over total inntekt for hver produkt, og plott også resultatet i et stolpediagram
-#  Hvilket produkt virker til å bringe inn mest inntekter og hvilket bringer inn minst?
-# Lag en ny tabell over total inntekt for hvert produkt per år. Igjen plott resultatet i et stolpediagram. 
-# Ser det ut til å være noe forskjell i distribusjonen av kjøp av drikke varer 
-# mellom forskjellige år. Altså er et produkt mer eller mindre populært noen år?
 
 # Dataframe for solgte produkter, fordelt på år.
 bukta_produkt_ar <- Bukta_data %>% 
@@ -74,54 +73,43 @@ bukta_produkt_ar <- Bukta_data %>%
     antall = sum(antall)
     )
 
-# Samlet inntekt av produkter. 
+tibble(bukta_produkt_ar) # viser datasettet
+
+# Plotter graf for samlet inntekt av produkter.
 bukta_produkt_ar %>% 
   ggplot(aes(produkt, inntekt_produkt, fill = produkt)) +
   geom_col() +
-  theme_classic() +
+  theme_minimal() +
   theme(legend.position = "none") +
-  labs(x = "Produkt", y = "Inntekt") +
+  labs(x = "Produkt", y = "Samlet inntekt") +
   scale_y_continuous(labels = scales::comma) #breaks = seq(0,300000, 20000))
 
 
-# Dataframe for solgte produkter, fordelt på år og dag.
+# Tabell for solgte produkter, fordelt på år og dag.
 bukta_produkt_dag <- Bukta_data %>%
   group_by(ar,dag, produkt) %>% 
   summarise(
     inntekt_produkt = sum(antall * pris),
     antall = sum(antall)
     )
+ 
+tibble(bukta_produkt_dag) # viser datasettet
 
-# Aggregert produkter fordelt på år 
+# Plotter graf av inntektene til produktene fordelt på år. 
 bukta_produkt_dag %>%
-  rename(Produkt = produkt) %>% 
-  ggplot(aes(ar, inntekt_produkt, fill = Produkt)) +
+  rename(Produkt = produkt,
+         År = ar) %>% 
+  ggplot(aes(y = inntekt_produkt, x = Produkt,  fill = År)) +
   geom_col(position = "dodge") +
-  theme_bw() +
-  theme(legend.position = "bottom") +
-  labs(x = "År", y = "Inntekt") +
-  scale_y_continuous(labels = scales::comma) #breaks = seq(0,300000, 20000))
-
-
-bukta_produkt_dag %>%
-  rename(Produkt = produkt) %>% 
-  ggplot(aes(y = inntekt_produkt, x = Produkt,  fill = ar)) +
-  geom_col(position = "dodge") +
-  theme_classic() +
+  theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = "Produkt", y = "Inntekt") +
   scale_y_continuous(labels = scales::comma)
 
 
-#  kommenter funnene.
-
-
 #opg 2.2  ----------------------------------------------------------------------
-#  Finn total inntekt for alle produktene per time.
-#  Gjennomfør en parvis t-test mellom produktene og inntekt, korriger p-verdiene med metoden Holm.
-#  Hvilke produkter tjener Bukta festivalen mer eller mindre på, og hvilke er relativt lik? 
-#  Vi forutsetter et signifikansnivå på 5% (𝛼 =0.05) i alle oppgavene. 
 
+# dataframe for salg pr time.
 bukta_salg_pr_time <- Bukta_data %>% 
   group_by(dato, produkt) %>% 
   summarize(
@@ -129,25 +117,14 @@ bukta_salg_pr_time <- Bukta_data %>%
     antall = sum(antall)
   )
 
+# t.test.
 pairwise.t.test(bukta_salg_pr_time$inntekt,
                 bukta_salg_pr_time$produkt,
                 p.adjust.method = "holm")
 
-# ved et sigifikantnivå under 5% observere vi
-# verdier lik 1 er relativt lik (wine, bukta beer, other beer lik 1 )
-# cider er relativt lik (0.7)
-# ytterpunkt pilsner (2e-16) og non alco (1.8e-07) 
-# Ytterpunktene er veldig signifikant men kan ikke si noe om det er positivt eller negativ retning for inntjening
-
-
-
 #opg 3.1  ----------------------------------------------------------------------
-# Lag 3 grafer som viser sammenhengen mellom total inntekt og hver 15 min av festivalen.
-# Lag en graf for torsdag men en linje for hvert år, en graf for fredag med en linje for hvert år 
-# og en graf for lørdag med en line for hvert år.
-# Hvilke trender ser vi i de forskjellige grafene og er det noe forskjell mellom år eller dager? 
 
-
+# Plotter inntekt fordelt på år og dag.
 Bukta_data %>%
   group_by(per15min, ar, dag)%>% 
   summarize(inntekt = sum(antall * pris)) %>%
@@ -162,12 +139,8 @@ Bukta_data %>%
   facet_grid(~dag)
 
 #opg 3.2 -----------------------------------------------------------------------
-# Aggregér datasettet ned til total inntekt per 15min, for hver dag og år (dette datasettet skal ha 240 rader).
-# Kommentér resultatene til modellen. 
-# slik denne regresjonen er satt opp går det ikke an å si noe om forskjellig inntekt mellom fredag og lørdag, 
-# det er kun mulig å si om inntekten er forskjellig fra 2016 og de andre årene.
-# Gjennomfør en test for å se om det er forskjell i inntekt mellom dagene, og mellom årene 2017, 2018 og 2019.
 
+# Dataframe for data per kvarter.
 per15 <- Bukta_data %>%
   mutate(inntekt = sum(antall * pris)) %>% 
   group_by(per15min, ar, dag)%>% 
@@ -180,6 +153,7 @@ per15 <- Bukta_data %>%
     vind = unique(vind)
   )
 
+# Regresjonsanalyse.
 regresjon <-  lm(inntekt ~ ar + dag + per15min, data = per15)
 summary(regresjon)
 
@@ -189,27 +163,15 @@ linearHypothesis(regresjon, "ar2018=ar2019")
 linearHypothesis(regresjon, "dagFredag=dagLordag")
 
 #opg 4  ------------------------------------------------------------------------
-# Ledelsen i Buktafestivalen er bekymret for at det dårlige været i Tromsø påvirker salget av drikkevarer. 
-# De ønsker at du gjennomfører en test av dette. 
-# Gjennomfør en lineær regresjon hvor du har aggregert total inntekt per 15 min.
-# I tillegg til vær legger vi til antall gjester, tid, dag og år for å passe på at forskjell som kun skyldes deltakere per år ikke 
-# fanges opp i vær-variablene. 
-# va kan du rapporterer til Buktafestivalens styre? Hvor sikker er du på disse resultatene? 
 
+# Regresjonsanalyse.
 regresjon2 <-  lm(inntekt ~ nedbør + temp + solskin + vind + gjester + dag + ar + per15min, data = per15)
 summary(regresjon2)
 
 
 #opg 5  ------------------------------------------------------------------------
-# For hver festival går et stort band på scenen på lørdag klokken 21:00. Dette gjør at 
-# pilssalget klokken 20:00-21:00 er det høyeste under hele festivalen. 
-# For å forbedrede seg til pils-rushet ber Buktafestivalens styreleder deg
-# om å predikere hvor mye pils (i antall enheter) de må gjøre klart til denne timen. 
-# Siden dette er observasjoner over et tidsintervall kan vi bruke Poisson fordelingen. 
-# Bruk gjennomsnittlig antall solgte pils mellom klokken 20:00 - 21:00. 
-# Hvor mange pils må gjøres klart slik at du er 95% sikker på at det ikke blir bestilt mer enn dette. 
 
-
+# Dataframe for qpois.
 lam <- Bukta_data %>%
   filter(time == 20,
          produkt == "Pilsner",
@@ -218,4 +180,5 @@ lam <- Bukta_data %>%
   summarize(antall = sum(antall))%>% 
   summarize(mean(antall))
 
+# kjører qpois. 
 qpois(0.95, lambda=lam[[1]])
